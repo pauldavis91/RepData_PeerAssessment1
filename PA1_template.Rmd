@@ -1,25 +1,121 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "PA1_template.Rmd"
+author: "Paul Davis"
+date: "May 9, 2018"
+output: html_document
 ---
 
+# Reproducible Research - Course Project 1
 
 ## Loading and preprocessing the data
 
+1. Load the data
 
+```{r,echo=TRUE}
+if(!file.exists("activity.csv"))
+{
+  unzip("activity.zip")
+}
+x<-read.csv("activity.csv")
+```
+
+2. Preprocessing the data
+
+```{r,echo=TRUE}
+x$date<-as.Date(x$date,"%Y-%m-%d")
+```
 
 ## What is mean total number of steps taken per day?
 
+1. Calculate the total number of steps taken per day
 
+```{r,echo=TRUE}
+totalstepsperday<-aggregate(x$steps,list(x$date),sum,na.rm=TRUE)
+names(totalstepsperday)<-c("date","steps")
+```
+
+2. Make a histogram of the total number of steps taken each day
+
+```{r,echo=TRUE}
+hist(totalstepsperday$steps)
+```
+
+3. Calculate and report the mean and median of the total number of steps taken per day
+
+```{r,echo=TRUE}
+meantotalstepsperday<-mean(totalstepsperday$steps)
+mediantotalstepsperday<-median(totalstepsperday$steps)
+```
+
+Mean = `r meantotalstepsperday`, 
+Median = `r mediantotalstepsperday`
 
 ## What is the average daily activity pattern?
 
+1. Make a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
+```{r,echo=TRUE}
+averagestepsperinterval<-aggregate(steps~interval,x,mean)
+plot(averagestepsperinterval$interval,averagestepsperinterval$steps,type = "l",xlab = "average steps",ylab = "interval")
+```
+
+2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+```{r,echo=TRUE}
+maxinterval<-averagestepsperinterval[which(averagestepsperinterval$steps==max(averagestepsperinterval$steps)),1]
+```
+
+Interval which contains the maximum number of steps = `r maxinterval`
 
 ## Imputing missing values
 
+1. Calculate and report the total number of missing values in the dataset
 
+```{r,echo=TRUE}
+totalNA<-sum(is.na(x$steps))
+```
+
+Total number of missing value = `r totalNA`
+
+2. Devise a strategy for filling in all of the missing values in the dataset.
+
+Replacing NA values with mean of the data
+
+3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+```{r,echo=TRUE,message=FALSE,warning=FALSE}
+library(Hmisc)
+ximputed<-x
+ximputed$steps<-impute(ximputed$steps,fun = mean)
+```
+
+4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+```{r,echo=TRUE}
+totalstepsperdayimputed<-aggregate(steps~date,ximputed,sum)
+hist(totalstepsperdayimputed$steps)
+meantotalstepsperdayimputed<-mean(totalstepsperdayimputed$steps)
+mediantotalstepsperdayimputed<-median(totalstepsperdayimputed$steps)
+changeinmean<-meantotalstepsperdayimputed-meantotalstepsperday
+changeinmedian<-mediantotalstepsperdayimputed-mediantotalstepsperday
+```
+
+Imputed mean = `r meantotalstepsperdayimputed`, 
+Imputed median = `r mediantotalstepsperdayimputed`, 
+Change in mean = `r changeinmean`, 
+Change in median = `r changeinmedian`
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+1. Create a new factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
+
+```{r,echo=TRUE}
+ximputed$datetype<-ifelse(weekdays(ximputed$date)=="Saturday"|weekdays(ximputed$date)=="Sunday","weeekend","weekday")
+```
+
+2. Make a panel plot containing a time series plot (i.e. \color{red}{\verb|type = "l"|}type="l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
+
+```{r, echo=TRUE}
+averagestepsperintervalperdatetype<-aggregate(steps~interval+datetype,ximputed,mean)
+xyplot(steps~interval|datetype,averagestepsperintervalperdatetype,type="l",xlab="interval",ylab="average steps",layout=c(1,2))
+```
