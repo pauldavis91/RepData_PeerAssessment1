@@ -2,7 +2,7 @@
 title: "PA1_template.Rmd"
 author: "Paul Davis"
 date: "May 9, 2018"
-output: html_document
+output: md_document
 ---
 
 # Reproducible Research - Course Project 1
